@@ -1,0 +1,41 @@
+---
+- name: Install supervisord
+  pip:
+    name: supervisor
+
+- name: Prepare supervisord directories
+  file:
+    state: directory
+    path: "{{ item }}"
+    mode: 0755
+    owner: "{{ supervisor_user }}"
+    group: "{{ supervisor_group }}"
+  with_items:
+    - "{{ supervisor_conf_dir }}"
+    - "{{ supervisor_log_dir }}"
+    - "{{ supervisor_pid_dir }}"
+
+- name: Create supervisord config file
+  template:
+    src: supervisord.conf
+    dest: "{{ supervisor_config }}"
+
+- name: Create supervisord init.d file
+  template:
+    src: supervisor_initd
+    dest: /etc/init.d/supervisor
+    mode: 0755
+
+- name: Install shell wrapper script
+  copy:
+    src: run_with_env.sh
+    dest: /usr/local/bin/run_with_env.sh
+    mode: 0755
+    owner: root
+    group: root
+
+- name: Ensure the supervisor is started
+  service:
+    name: supervisor
+    enabled: yes
+    state: started
